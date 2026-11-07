@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/product.dart';
+import '../services/product_service.dart';
 import '../theme/app_colors.dart';
+import 'product_form_screen.dart';
 
 class DetailScreen extends StatefulWidget {
   final Product product;
@@ -15,11 +17,91 @@ class DetailScreen extends StatefulWidget {
 
 class _DetailScreenState extends State<DetailScreen> {
   int _page = 0;
+  late Product _product = widget.product;
+  bool _busy = false;
 
-  Product get p => widget.product;
+  /// Pesan yang dikirim ke halaman depan saat kembali (null = tak ada perubahan).
+  String? _message;
+
+  Product get p => _product;
+
+  /// UPDATE: buka form ubah, lalu tampilkan hasilnya di halaman ini.
+  Future<void> _edit() async {
+    final updated = await Navigator.of(context).push<Product>(
+      MaterialPageRoute(builder: (_) => ProductFormScreen(product: _product)),
+    );
+    if (updated == null || !mounted) return;
+    setState(() {
+      _product = updated;
+      _page = 0;
+      _message = 'Produk "${updated.title}" berhasil diperbarui';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Perubahan tersimpan'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.accentDark,
+      ),
+    );
+  }
+
+  /// DELETE: konfirmasi, hapus, lalu kembali ke halaman depan.
+  Future<void> _delete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Hapus produk?',
+            style: TextStyle(fontWeight: FontWeight.w800)),
+        content: Text('"${_product.title}" akan dihapus dari daftar.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal',
+                style: TextStyle(color: AppColors.textSoft)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await ProductService().deleteProduct(_product);
+      if (!mounted) return;
+      Navigator.of(context).pop('Produk "${_product.title}" berhasil dihapus');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${e.toString().replaceFirst('Exception: ', '')}. '
+              'Periksa koneksi internet kamu.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.accentDark,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) Navigator.of(context).pop(_message);
+      },
+      child: _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -101,7 +183,24 @@ class _DetailScreenState extends State<DetailScreen> {
               top: 8,
               child: _CircleButton(
                 icon: Icons.arrow_back_ios_new_rounded,
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => Navigator.of(context).pop(_message),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              top: 8,
+              child: Row(
+                children: [
+                  _CircleButton(
+                    icon: Icons.edit_rounded,
+                    onTap: _busy ? () {} : _edit,
+                  ),
+                  const SizedBox(width: 8),
+                  _CircleButton(
+                    icon: Icons.delete_rounded,
+                    onTap: _busy ? () {} : _delete,
+                  ),
+                ],
               ),
             ),
             if (p.images.length > 1)

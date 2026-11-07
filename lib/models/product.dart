@@ -56,6 +56,39 @@ class Product {
     required this.reviews,
   });
 
+  /// Salinan produk dengan id baru (dipakai setelah produk dibuat).
+  Product withId(int newId) => Product(
+        id: newId,
+        title: title,
+        description: description,
+        category: category,
+        price: price,
+        discountPercentage: discountPercentage,
+        rating: rating,
+        stock: stock,
+        brand: brand,
+        thumbnail: thumbnail,
+        images: images,
+        availabilityStatus: availabilityStatus,
+        shippingInformation: shippingInformation,
+        warrantyInformation: warrantyInformation,
+        returnPolicy: returnPolicy,
+        reviews: reviews,
+      );
+
+  /// Body JSON yang dikirim ke API saat tambah / ubah produk.
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'description': description,
+        'category': category,
+        'price': price,
+        'discountPercentage': discountPercentage,
+        'stock': stock,
+        'brand': brand,
+        'thumbnail': thumbnail,
+        'images': images,
+      };
+
   /// Harga setelah diskon.
   double get finalPrice => price * (1 - discountPercentage / 100);
 

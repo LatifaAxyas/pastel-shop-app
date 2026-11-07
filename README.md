@@ -1,18 +1,28 @@
 # 🛍️ Pastel Shop
 
-Aplikasi katalog produk mobile (Flutter) bertema warna pastel. Data produk diambil dari API [DummyJSON Products](https://dummyjson.com/docs/products).
+Aplikasi katalog produk mobile (Flutter) bertema warna pastel dengan fitur **CRUD penuh** (Create, Read, Update, Delete) yang terhubung ke backend [DummyJSON Products](https://dummyjson.com/docs/products).
 
 ## 🎥 Video Penjelasan & Demo
 
-**Link YouTube:** (https://youtu.be/O4bgisvq8Pk)
+**Link YouTube:** _(isi dengan link video kamu, permission Public, wajah terlihat)_
 
 ## ✨ Fitur
 
-- **Halaman depan**: menampilkan seluruh produk (194 item) dalam grid 2 kolom dengan kartu berwarna pastel.
-- **Halaman detail produk**: galeri gambar (geser), kategori, brand, rating, harga + diskon, deskripsi, stok, pengiriman, garansi, kebijakan retur, dan ulasan. Dibuka dengan menekan produk di halaman depan.
-- **Search fungsional**: ketik kata kunci lalu tekan tombol search (atau enter di keyboard). Mencari ke endpoint `/products/search`. Ada tombol ✕ untuk menghapus pencarian.
-- State loading, error (dengan tombol coba lagi), dan hasil kosong.
-- Pull-to-refresh di halaman depan.
+| Operasi | Fitur di aplikasi | Endpoint backend |
+|---------|-------------------|------------------|
+| **Read** | Halaman depan menampilkan seluruh produk (grid 2 kolom), halaman detail produk | `GET /products?limit=0` |
+| **Read** | Search fungsional (tombol search / enter), tombol ✕ untuk reset | `GET /products/search?q=` |
+| **Create** | Tombol **Tambah** (kanan bawah) membuka form tambah produk | `POST /products/add` |
+| **Update** | Ikon ✏️ di halaman detail membuka form ubah produk | `PUT /products/{id}` |
+| **Delete** | Ikon 🗑️ di halaman detail, dengan dialog konfirmasi | `DELETE /products/{id}` |
+
+Tambahan:
+- Validasi form (field wajib, angka, URL gambar).
+- State loading, error (tombol coba lagi), hasil kosong, dan pull-to-refresh.
+- Notifikasi (snackbar) setelah tambah, ubah, dan hapus.
+- Tema warna pastel di seluruh halaman.
+
+> **Catatan backend:** DummyJSON hanya *mensimulasikan* perubahan data. Server membalas sukses untuk POST, PUT, dan DELETE, tetapi tidak benar-benar menyimpannya. Agar hasil CRUD tetap terlihat di aplikasi, respons sukses dari server dicatat di penyimpanan lokal sementara (`ProductService`) dan diterapkan ke daftar produk. Perubahan ini hilang saat aplikasi ditutup total.
 
 ## 🎨 Skema Warna Pastel
 
@@ -29,14 +39,9 @@ Aplikasi katalog produk mobile (Flutter) bertema warna pastel. Data produk diamb
 
 Palet ada di `lib/theme/app_colors.dart`.
 
-## 🔌 API yang Dipakai
-
-- `GET https://dummyjson.com/products?limit=0` — semua produk
-- `GET https://dummyjson.com/products/search?q=<kata>&limit=0` — pencarian
-
 ## 🚀 Cara Menjalankan (di handphone)
 
-Prasyarat: [Flutter SDK](https://docs.flutter.dev/get-started/install) terpasang dan HP Android dengan **USB debugging** aktif (atau emulator Android).
+Prasyarat: [Flutter SDK](https://docs.flutter.dev/get-started/install) terpasang dan HP Android dengan **USB debugging** aktif.
 
 ```bash
 git clone <link-repo-ini>
@@ -50,8 +55,8 @@ flutter devices        # pastikan HP terdeteksi
 flutter run            # jalankan di HP
 ```
 
-> Jika aplikasi dibuild **release** (`flutter build apk`), pastikan izin internet ada di
-> `android/app/src/main/AndroidManifest.xml`:
+> Untuk mode **release** (`flutter run --release` / `flutter build apk`), tambahkan izin internet di
+> `android/app/src/main/AndroidManifest.xml` (di atas tag `<application`):
 > `<uses-permission android:name="android.permission.INTERNET"/>`
 
 ## 📁 Struktur Project
@@ -59,11 +64,12 @@ flutter run            # jalankan di HP
 ```
 lib/
 ├── main.dart
-├── models/product.dart
-├── services/product_service.dart
+├── models/product.dart              # model + toJson
+├── services/product_service.dart    # CRUD ke backend
 ├── screens/
-│   ├── home_screen.dart
-│   └── detail_screen.dart
+│   ├── home_screen.dart             # daftar, search, tombol tambah
+│   ├── detail_screen.dart           # detail, ubah, hapus
+│   └── product_form_screen.dart     # form tambah / ubah
 ├── widgets/product_card.dart
 └── theme/app_colors.dart
 ```

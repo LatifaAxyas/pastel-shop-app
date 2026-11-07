@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../models/product.dart';
-import '../screens/detail_screen.dart';
 import '../theme/app_colors.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
   final int index;
+  final VoidCallback onTap;
 
-  const ProductCard({super.key, required this.product, required this.index});
+  const ProductCard({
+    super.key,
+    required this.product,
+    required this.index,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final bg = AppColors.cardColor(index);
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => DetailScreen(product: product, color: bg),
-        ),
-      ),
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,

@@ -4,6 +4,8 @@ import '../models/product.dart';
 import '../services/product_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/product_card.dart';
+import 'detail_screen.dart';
+import 'product_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,6 +59,39 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.accentDark,
+      ),
+    );
+  }
+
+  /// CREATE: buka form tambah produk.
+  Future<void> _addProduct() async {
+    final created = await Navigator.of(context).push<Product>(
+      MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+    );
+    if (created == null || !mounted) return;
+    await _load(query: _activeQuery);
+    if (mounted) _toast('Produk "${created.title}" berhasil ditambahkan');
+  }
+
+  /// Buka detail. Detail mengembalikan pesan jika produk diubah / dihapus.
+  Future<void> _openDetail(Product product, int index) async {
+    final message = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) =>
+            DetailScreen(product: product, color: AppColors.cardColor(index)),
+      ),
+    );
+    if (message == null || !mounted) return;
+    await _load(query: _activeQuery);
+    if (mounted) _toast(message);
+  }
+
   void _submitSearch() {
     _focus.unfocus();
     _load(query: _controller.text);
@@ -71,6 +106,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addProduct,
+        backgroundColor: AppColors.accent,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Tambah',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       color: AppColors.accentDark,
       onRefresh: () => _load(query: _activeQuery),
       child: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
         physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -228,8 +271,11 @@ class _HomeScreenState extends State<HomeScreen> {
           childAspectRatio: 0.72,
         ),
         itemCount: _products.length,
-        itemBuilder: (context, i) =>
-            ProductCard(product: _products[i], index: i),
+        itemBuilder: (context, i) => ProductCard(
+          product: _products[i],
+          index: i,
+          onTap: () => _openDetail(_products[i], i),
+        ),
       ),
     );
   }
